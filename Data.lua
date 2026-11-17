@@ -1,9 +1,8 @@
 -- OOP wrapper for slurped in data processing. Allows definition of some basic functions and removes the need to handle 1-indexing math.
 
-local here = (...):match("(.-)[^%.]+$")
-local Bitwise = require(here .. "Bitwise")
-local Error = require(here .. "Error")
-local Class = require(here .. "Class")
+local Bitwise = require("LuaDS.Bitwise")
+local Error = require("LuaDS.Error")
+local Class = require("LuaDS.Class")
 
 local Data = Class:extend()
 
@@ -39,6 +38,10 @@ function Data:slice(start_offset, end_offset)
     end
 
     return Data:new(self.raw, self.start_offset + start_offset, self.start_offset + end_offset)
+end
+
+function Data:len()
+    return self.end_offset - self.start_offset
 end
 
 function Data:access_check(addr, length)
@@ -100,20 +103,25 @@ function Data.deep_copy(orig, memo)
     if type(orig) ~= "table" then 
         return orig
     end
+
     memo = memo or {}
     if memo[orig] then 
         return memo[orig] 
     end
+
     local copy = {}
     memo[orig] = copy
     for k, v in pairs(orig) do
         copy[Data.deep_copy(k, memo)] = Data.deep_copy(v, memo)
     end
+    
     return setmetatable(copy, getmetatable(orig))
 end
 
 function Data.deep_compare(a, b, memo)
-    if a == b then return true end
+    if a == b then 
+        return true 
+    end
     if type(a) ~= type(b) or type(a) ~= "table" or getmetatable(a) ~= getmetatable(b) then 
         return false 
     end

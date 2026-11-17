@@ -2,9 +2,9 @@
 -- OOP wrapper for dynamic memory address pointer chasing. Each address is a node, and each node has at least one edge relating it to at least one other node. 
 -- If multiple "parent" nodes exist, the node will return nil if the addresses of the parents do not resolve to the same value. This is to more robustly detect corruption and unstable memory.
 
-local here = (...):match("(.-)[^%.]+$")
-local Class = require(here .. "Class")
-local Queue = require(here .. "Queue")
+local Class = require("LuaDS.Class")
+local Queue = require("LuaDS.Queue")
+local Data = require("LuaDS.Data")
 
 local MemNode = Class:extend()
 MemNode.cache = {}
@@ -195,68 +195,48 @@ function MemNode:get_address()
     return MemNode.cache[self]
 end
 
-function MemNode:readbyte(offset)
+function MemNode:read(offset, size)
     local addr = self:get_address()
     if not addr then
         return false
     end
-    return memory.readbyte(addr + (offset or 0))
-end
-function MemNode:writebyte(val, offset)
-    local addr = self:get_address()
-    if not addr then
-        return false
-    end
-    memory.writebyte(addr + (offset or 0), val)
-    return true
+    local data = Data:new(memory.readbyterange(addr + offset, size))
+    return data:read(0, size)
 end
 
-function MemNode:readword(offset)
+function MemNode:readbyterange(offset, size)
     local addr = self:get_address()
     if not addr then
         return false
     end
-    return memory.readword(addr + (offset or 0))
-end
-function MemNode:writeword(val, offset)
-    local addr = self:get_address()
-    if not addr then
-        return false
+    if not size then -- if just one argument, assume it is the size.
+        size = offset
+        offset = 0
     end
-    memory.writeword(addr + (offset or 0), val)
-    return true
+    return memory.readbyterange(addr + offset, size)
 end
 
-function MemNode:readdword(offset)
+function MemNode:write(offset, size, val)
     local addr = self:get_address()
     if not addr then
         return false
     end
-    return memory.readdword(addr + (offset or 0))
-end
-function MemNode:writedword(val, offset)
-    local addr = self:get_address()
-    if not addr then
-        return false
-    end
-    memory.writedword(addr + (offset or 0), val)
-    return true
+    local data = Data:blank(size)
+    data:write(0, size, val)
+    data:write_to_memory(addr + offset, 0, size)
 end
 
-function MemNode:readbyterange(length, offset)
+function MemNode:writebyterange(offset, bytes)
     local addr = self:get_address()
     if not addr then
         return false
     end
-    return memory.readbyterange(addr + (offset or 0), length)
-end
-function MemNode:writebyterange(bytes, offset)
-    local addr = self:get_address()
-    if not addr then
-        return false
+    if not bytes then -- If just one argument, assume it is the bytes.
+        bytes = offset
+        offset = 0
     end
     for i = 1, #bytes do
-        memory.writebyte(addr + (offset or 0) + (i - 1), bytes[i])
+        memory.writebyte(addr + offset + (i - 1), bytes[i])
     end
     return true
 end

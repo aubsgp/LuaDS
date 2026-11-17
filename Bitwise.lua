@@ -1,6 +1,7 @@
 local Bitwise = {}
 
 function Bitwise.base(a, b, condition, bits)
+    assert((-2^53 < a and a < 2^53) and (-2^53 < b and b < 2^53), "WARNING: Bitwise operation on too-large values.")
     bits = bits or 0
     local ret = 0
     local bitval = 1
@@ -44,12 +45,12 @@ function Bitwise.bnot(a, size)
     return Bitwise.base(a, 0, function(a_bit, b_bit) return a_bit == 0 end, size)
 end
 
-function Bitwise.lshift(a, b)
-    return a * (2 ^ b)
-end
-
-function Bitwise.rshift(a, b)
-    return math.floor(a * (0.5 ^ b))
+function Bitwise.shift(a, dir, b)
+    if dir == "<<" then
+        return a * (2 ^ b)
+    elseif dir == ">>" then
+        return math.floor(a / (2 ^ b))
+    end
 end
 
 return Bitwise

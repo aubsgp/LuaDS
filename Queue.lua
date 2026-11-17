@@ -1,8 +1,10 @@
-local Queue = {}
-Queue.__index = Queue
+local Class = require("LuaDS.Class")
 
-function Queue:new()
-    return setmetatable({head = 1, tail = 1}, self)
+local Queue = Class:extend()
+
+function Queue:init()
+    self.head = 1
+    self.tail = 1
 end
 
 function Queue:is_empty()
